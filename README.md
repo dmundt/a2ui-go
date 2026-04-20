@@ -1,5 +1,7 @@
 # A2UI Go Renderer (Experimental)
 
+[![Go Test and Validation](https://github.com/dmundt/au2ui-go/actions/workflows/go-test-validation.yml/badge.svg)](https://github.com/dmundt/au2ui-go/actions/workflows/go-test-validation.yml)
+
 This repository is an experimental renderer used to test key concepts around A2UI v0.8, Go, html/template, and dynamic rendering workflows.
 
 It is intentionally focused on learning and validation over production hardening.
