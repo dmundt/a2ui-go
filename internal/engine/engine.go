@@ -16,6 +16,7 @@ import (
 	"github.com/dmundt/a2ui-go/internal/store"
 	"github.com/dmundt/a2ui-go/internal/stream"
 	"github.com/dmundt/a2ui-go/renderer"
+	"github.com/go-chi/chi/v5"
 )
 
 // Engine validates, applies updates, renders html, and persists pages.
@@ -162,11 +163,30 @@ func (e *Engine) renderUIFile(fileName string) (string, bool, error) {
 		}
 		return "", false, err
 	}
+
+	start := time.Now()
 	renderedHTML, err := e.ProcessJSONL(string(content))
+	elapsed := time.Since(start).Milliseconds()
+
 	if err != nil {
 		return "", false, err
 	}
+
+	renderedHTML = addRenderTimingBadge(renderedHTML, elapsed)
+
 	return renderedHTML, true, nil
+}
+
+func addRenderTimingBadge(renderedHTML string, elapsedMillis int64) string {
+	badge := fmt.Sprintf(`<p class="a2ui-render-timing" aria-label="rendering-time">Render time: %d ms</p>`, elapsedMillis)
+
+	lower := strings.ToLower(renderedHTML)
+	idx := strings.LastIndex(lower, "</body>")
+	if idx == -1 {
+		return renderedHTML + badge
+	}
+
+	return renderedHTML[:idx] + badge + renderedHTML[idx:]
 }
 
 func (e *Engine) loadPageFromUIFile(pageID string) (store.Page, bool, error) {
@@ -201,12 +221,8 @@ func (e *Engine) Health() map[string]string {
 }
 
 // RegisterHTTPHandlers wires all required HTTP endpoints.
-func RegisterHTTPHandlers(mux *http.ServeMux, eng *Engine) {
-	mux.HandleFunc("/render/a2ui", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
+func RegisterHTTPHandlers(router chi.Router, eng *Engine) {
+	router.Post("/render/a2ui", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		b, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -225,9 +241,17 @@ func RegisterHTTPHandlers(mux *http.ServeMux, eng *Engine) {
 		_, _ = w.Write([]byte(out))
 	})
 
-	mux.HandleFunc("/page/", func(w http.ResponseWriter, r *http.Request) {
-		id := strings.TrimPrefix(r.URL.Path, "/page/")
-		if strings.TrimSpace(id) == "" {
+	router.Get("/page", func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "missing page id", http.StatusBadRequest)
+	})
+
+	router.Get("/page/", func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "missing page id", http.StatusBadRequest)
+	})
+
+	router.Get("/page/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := strings.TrimSpace(chi.URLParam(r, "id"))
+		if id == "" {
 			http.Error(w, "missing page id", http.StatusBadRequest)
 			return
 		}
@@ -248,7 +272,7 @@ func RegisterHTTPHandlers(mux *http.ServeMux, eng *Engine) {
 		_, _ = w.Write([]byte(p.HTML))
 	})
 
-	mux.HandleFunc("/stream", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/stream", func(w http.ResponseWriter, r *http.Request) {
 		flusher, ok := w.(http.Flusher)
 		if !ok {
 			http.Error(w, "stream unsupported", http.StatusInternalServerError)
@@ -277,7 +301,7 @@ func RegisterHTTPHandlers(mux *http.ServeMux, eng *Engine) {
 		}
 	})
 
-	mux.HandleFunc("/inspect/table-row", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/inspect/table-row", func(w http.ResponseWriter, r *http.Request) {
 		pageID := strings.TrimSpace(r.URL.Query().Get("page_id"))
 		tableID := strings.TrimSpace(r.URL.Query().Get("table_id"))
 		rowIndexStr := strings.TrimSpace(r.URL.Query().Get("row"))
@@ -321,12 +345,12 @@ func RegisterHTTPHandlers(mux *http.ServeMux, eng *Engine) {
 		_, _ = w.Write([]byte(htmlOut))
 	})
 
-	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
+	router.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"status":"ok","version":"` + a2ui.VersionV08 + `"}`))
 	})
 
-	mux.HandleFunc("/debug", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/debug", func(w http.ResponseWriter, r *http.Request) {
 		if renderedHTML, ok, err := eng.renderUIFile("debug.jsonl"); err == nil && ok {
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			_, _ = w.Write([]byte(renderedHTML))
@@ -347,11 +371,7 @@ func RegisterHTTPHandlers(mux *http.ServeMux, eng *Engine) {
 		_, _ = w.Write([]byte(sb.String()))
 	})
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			http.NotFound(w, r)
-			return
-		}
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		if renderedHTML, ok, err := eng.renderUIFile("index.jsonl"); err == nil && ok {
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			_, _ = w.Write([]byte(renderedHTML))
@@ -363,11 +383,7 @@ func RegisterHTTPHandlers(mux *http.ServeMux, eng *Engine) {
 		http.NotFound(w, r)
 	})
 
-	mux.HandleFunc("/catalog", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/catalog" {
-			http.NotFound(w, r)
-			return
-		}
+	router.Get("/catalog", func(w http.ResponseWriter, r *http.Request) {
 		if renderedHTML, ok, err := eng.renderUIFile(filepath.Join("catalog", "index.jsonl")); err == nil && ok {
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			_, _ = w.Write([]byte(renderedHTML))
@@ -379,9 +395,9 @@ func RegisterHTTPHandlers(mux *http.ServeMux, eng *Engine) {
 		http.NotFound(w, r)
 	})
 
-	mux.HandleFunc("/catalog/", func(w http.ResponseWriter, r *http.Request) {
-		component := strings.TrimPrefix(r.URL.Path, "/catalog/")
-		if strings.TrimSpace(component) == "" || strings.Contains(component, "/") {
+	router.Get("/catalog/{component}", func(w http.ResponseWriter, r *http.Request) {
+		component := strings.TrimSpace(chi.URLParam(r, "component"))
+		if component == "" {
 			http.NotFound(w, r)
 			return
 		}
@@ -403,11 +419,7 @@ func RegisterHTTPHandlers(mux *http.ServeMux, eng *Engine) {
 		_, _ = w.Write([]byte(renderedHTML))
 	})
 
-	mux.HandleFunc("/composites", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/composites" {
-			http.NotFound(w, r)
-			return
-		}
+	router.Get("/composites", func(w http.ResponseWriter, r *http.Request) {
 		if renderedHTML, ok, err := eng.renderUIFile(filepath.Join("composites", "index.jsonl")); err == nil && ok {
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			_, _ = w.Write([]byte(renderedHTML))
@@ -419,9 +431,9 @@ func RegisterHTTPHandlers(mux *http.ServeMux, eng *Engine) {
 		http.NotFound(w, r)
 	})
 
-	mux.HandleFunc("/composites/", func(w http.ResponseWriter, r *http.Request) {
-		compositeName := strings.TrimSpace(strings.TrimPrefix(r.URL.Path, "/composites/"))
-		if compositeName == "" || strings.Contains(compositeName, "/") {
+	router.Get("/composites/{name}", func(w http.ResponseWriter, r *http.Request) {
+		compositeName := strings.TrimSpace(chi.URLParam(r, "name"))
+		if compositeName == "" {
 			http.NotFound(w, r)
 			return
 		}

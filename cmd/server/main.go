@@ -16,6 +16,7 @@ import (
 	"github.com/dmundt/a2ui-go/internal/stream"
 	"github.com/dmundt/a2ui-go/mcp"
 	"github.com/dmundt/a2ui-go/renderer"
+	"github.com/go-chi/chi/v5"
 )
 
 func main() {
@@ -29,10 +30,13 @@ func main() {
 		log.Fatalf("template registry: %v", err)
 	}
 
-	uiDir := "github.com/dmundt/a2ui-go/internal/ui"
-	if resolvedUI, err := resolveDir("github.com/dmundt/a2ui-go/internal/ui"); err == nil {
+	uiDir := "internal/ui"
+	if resolvedUI, err := resolveDir("internal/ui"); err == nil {
 		uiDir = resolvedUI
+	} else {
+		log.Printf("warning: could not resolve ui directory: %v", err)
 	}
+	log.Printf("using uiDir: %s", uiDir)
 	log.Printf("resolved uiDir: %s", uiDir)
 
 	r := renderer.New(reg)
@@ -41,18 +45,18 @@ func main() {
 	eng := engine.New(r, reg, pageStore, broker, uiDir)
 	mcpHandlers := mcp.NewHandlers(eng, reg)
 
-	mux := http.NewServeMux()
-	engine.RegisterHTTPHandlers(mux, eng)
+	router := chi.NewRouter()
+	engine.RegisterHTTPHandlers(router, eng)
 
 	staticDir := "static"
 	if resolvedStatic, serr := resolveDir("static"); serr == nil {
 		staticDir = resolvedStatic
 	}
-	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
+	router.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir(staticDir))))
 
 	server := &http.Server{
 		Addr:              "localhost:8080",
-		Handler:           mux,
+		Handler:           router,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
@@ -86,18 +90,16 @@ func main() {
 }
 
 func resolveDir(parts ...string) (string, error) {
-	candidates := make([]string, 0, 8)
+	candidates := make([]string, 0, 6)
 	rel := filepath.Join(parts...)
 	candidates = append(candidates, rel)
 	candidates = append(candidates, filepath.Join("..", rel))
-	candidates = append(candidates, filepath.Join("github.com/dmundt/a2ui-go", rel))
 
 	exePath, err := os.Executable()
 	if err == nil {
 		exeDir := filepath.Dir(exePath)
 		candidates = append(candidates, filepath.Join(exeDir, rel))
 		candidates = append(candidates, filepath.Join(exeDir, "..", rel))
-		candidates = append(candidates, filepath.Join(exeDir, "github.com/dmundt/a2ui-go", rel))
 	}
 
 	for _, c := range candidates {

@@ -415,6 +415,19 @@ h5.a2ui-text { font-size: var(--a2ui-font-size-s); }
 	padding-bottom: calc(var(--a2ui-spacing-xs) - 2px);
 }
 
+.a2ui-render-timing {
+	max-width: 980px;
+	margin: var(--a2ui-spacing-m) auto 0 auto;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: color-mix(in oklab, var(--a2ui-color-on-surface) 75%, transparent);
+	font-family: var(--a2ui-font-family-monospace);
+	font-size: var(--a2ui-font-size-xs);
+	line-height: var(--a2ui-line-height-body);
+	text-align: right;
+}
+
 @media (max-width: 800px) {
 	body {
 		padding: var(--a2ui-spacing-m);

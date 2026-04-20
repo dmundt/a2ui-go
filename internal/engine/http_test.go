@@ -14,6 +14,7 @@ import (
 	"github.com/dmundt/a2ui-go/internal/store"
 	"github.com/dmundt/a2ui-go/internal/stream"
 	"github.com/dmundt/a2ui-go/renderer"
+	"github.com/go-chi/chi/v5"
 )
 
 func setup(t *testing.T) *httptest.Server {
@@ -24,9 +25,9 @@ func setup(t *testing.T) *httptest.Server {
 	}
 	r := renderer.New(reg)
 	eng := engine.New(r, reg, store.NewPageStore(), stream.NewBroker(), "../../internal/ui")
-	mux := http.NewServeMux()
-	engine.RegisterHTTPHandlers(mux, eng)
-	return httptest.NewServer(mux)
+	router := chi.NewRouter()
+	engine.RegisterHTTPHandlers(router, eng)
+	return httptest.NewServer(router)
 }
 
 func setupWithUIDir(t *testing.T, uiDir string) *httptest.Server {
@@ -37,9 +38,9 @@ func setupWithUIDir(t *testing.T, uiDir string) *httptest.Server {
 	}
 	r := renderer.New(reg)
 	eng := engine.New(r, reg, store.NewPageStore(), stream.NewBroker(), uiDir)
-	mux := http.NewServeMux()
-	engine.RegisterHTTPHandlers(mux, eng)
-	return httptest.NewServer(mux)
+	router := chi.NewRouter()
+	engine.RegisterHTTPHandlers(router, eng)
+	return httptest.NewServer(router)
 }
 
 func TestRenderAndPageEndpoint(t *testing.T) {
@@ -113,6 +114,51 @@ func TestCatalogComponentEndpointsRenderAllBaseControls(t *testing.T) {
 		}
 		if !strings.Contains(content, "Back to Catalog") {
 			t.Fatalf("unexpected content for %s: %s", component, content)
+		}
+	}
+}
+
+func TestCompositesIndexAndEndpointsRenderSuccessfully(t *testing.T) {
+	srv := setup(t)
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/composites")
+	if err != nil {
+		t.Fatalf("get composites index: %v", err)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		t.Fatalf("read composites index: %v", err)
+	}
+
+	content := string(body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("unexpected status for composites index: %d body=%s", resp.StatusCode, content)
+	}
+	if !strings.Contains(content, "A2UI Composite Gallery") {
+		t.Fatalf("unexpected content for composites index: %s", content)
+	}
+
+	for _, composite := range []string{"breadcrumbs", "chips", "header", "footer", "navbar", "pagination", "table"} {
+		resp, err := http.Get(srv.URL + "/composites/" + composite)
+		if err != nil {
+			t.Fatalf("get composites/%s: %v", composite, err)
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			t.Fatalf("read composites/%s: %v", composite, err)
+		}
+
+		content := string(body)
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("unexpected status for composites/%s: %d body=%s", composite, resp.StatusCode, content)
+		}
+		if !strings.Contains(content, "Back to Composites") {
+			t.Fatalf("unexpected content for composites/%s: %s", composite, content)
 		}
 	}
 }
