@@ -1,0 +1,5 @@
+{{ define "component.datetimeinput" }}
+{{ if .DateTimeInput }}
+<input id="{{ .ID }}" class="a2ui-input {{ .Class }}" type="{{ if and .DateTimeInput.EnableDate .DateTimeInput.EnableTime }}datetime-local{{ else if .DateTimeInput.EnableDate }}date{{ else }}time{{ end }}" value="{{ .DateTimeInput.Value }}">
+{{ end }}
+{{ end }}

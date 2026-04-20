@@ -1,0 +1,12 @@
+{{ define "component.text" }}
+{{ if .Text }}
+{{ if eq .Text.UsageHint "h1" }}<h1 id="{{ .ID }}" class="a2ui-text {{ .Class }}">{{ .Text.Value }}</h1>
+{{ else if eq .Text.UsageHint "h2" }}<h2 id="{{ .ID }}" class="a2ui-text {{ .Class }}">{{ .Text.Value }}</h2>
+{{ else if eq .Text.UsageHint "h3" }}<h3 id="{{ .ID }}" class="a2ui-text {{ .Class }}">{{ .Text.Value }}</h3>
+{{ else if eq .Text.UsageHint "h4" }}<h4 id="{{ .ID }}" class="a2ui-text {{ .Class }}">{{ .Text.Value }}</h4>
+{{ else if eq .Text.UsageHint "h5" }}<h5 id="{{ .ID }}" class="a2ui-text {{ .Class }}">{{ .Text.Value }}</h5>
+{{ else if eq .Text.UsageHint "caption" }}<span id="{{ .ID }}" class="a2ui-text a2ui-text--caption {{ .Class }}">{{ .Text.Value }}</span>
+{{ else }}<p id="{{ .ID }}" class="a2ui-text {{ .Class }}">{{ .Text.Value }}</p>
+{{ end }}
+{{ end }}
+{{ end }}

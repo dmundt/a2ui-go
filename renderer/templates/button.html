@@ -1,0 +1,21 @@
+{{ define "component.button" }}
+{{ if .Button }}
+{{ if .Button.LinkURL }}
+<a
+  id="{{ .ID }}"
+  class="a2ui-link {{ .Class }}"
+  href="{{ .Button.LinkURL }}"
+>
+  {{ if .Button.ChildHTML }}{{ .Button.ChildHTML }}{{ else }}{{ .Button.ActionName }}{{ end }}
+</a>
+{{ else }}
+<button
+  id="{{ .ID }}"
+  class="a2ui-btn{{ if .Button.Primary }} a2ui-btn--primary{{ end }} {{ .Class }}"
+  {{ if .Button.ActionName }}data-action="{{ .Button.ActionName }}" hx-post="/action" hx-vals='{{ .Button.ActionJSON }}' hx-swap="none"{{ end }}
+>
+  {{ if .Button.ChildHTML }}{{ .Button.ChildHTML }}{{ else }}{{ .Button.ActionName }}{{ end }}
+</button>
+{{ end }}
+{{ end }}
+{{ end }}

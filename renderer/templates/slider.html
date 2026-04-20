@@ -1,0 +1,5 @@
+{{ define "component.slider" }}
+{{ if .Slider }}
+<input id="{{ .ID }}" class="a2ui-slider {{ .Class }}" type="range" value="{{ .Slider.Value }}" min="{{ .Slider.MinValue }}" max="{{ .Slider.MaxValue }}">
+{{ end }}
+{{ end }}

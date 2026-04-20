@@ -1,0 +1,5 @@
+{{ define "component.icon" }}
+{{ if .Icon }}
+<span id="{{ .ID }}" class="material-icons a2ui-icon {{ .Class }}" aria-hidden="true">{{ .Icon.Name }}</span>
+{{ end }}
+{{ end }}

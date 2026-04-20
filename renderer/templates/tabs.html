@@ -1,0 +1,32 @@
+{{ define "component.tabs" }}
+<div id="{{ .ID }}" class="a2ui-tabs {{ .Class }}">
+  {{ if .Tabs }}
+  <div class="a2ui-tabs__nav" role="tablist">
+    {{ range $i, $tab := .Tabs.Items }}
+    <button class="a2ui-tabs__tab{{ if eq $i 0 }} a2ui-tabs__tab--active{{ end }}" role="tab" data-tab-idx="{{ $i }}">{{ $tab.Title }}</button>
+    {{ end }}
+  </div>
+  <div class="a2ui-tabs__panels">
+    {{ range $i, $tab := .Tabs.Items }}
+    <div class="a2ui-tabs__panel{{ if ne $i 0 }} a2ui-tabs__panel--hidden{{ end }}" data-panel-idx="{{ $i }}">{{ $tab.Content }}</div>
+    {{ end }}
+  </div>
+  {{ end }}
+</div>
+<script>
+(function(){
+  var el = document.getElementById("{{ .ID }}");
+  if (!el) return;
+  var tabs = el.querySelectorAll(".a2ui-tabs__tab");
+  var panels = el.querySelectorAll(".a2ui-tabs__panel");
+  tabs.forEach(function(tab, i){
+    tab.addEventListener("click", function(){
+      tabs.forEach(function(t){ t.classList.remove("a2ui-tabs__tab--active"); });
+      panels.forEach(function(p){ p.classList.add("a2ui-tabs__panel--hidden"); });
+      tab.classList.add("a2ui-tabs__tab--active");
+      panels[i].classList.remove("a2ui-tabs__panel--hidden");
+    });
+  });
+})();
+</script>
+{{ end }}

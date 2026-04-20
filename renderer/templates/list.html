@@ -1,0 +1,6 @@
+{{ define "component.list" }}
+<div id="{{ .ID }}" class="a2ui-list {{ .Class }}"
+  {{ if .List }}data-direction="{{ .List.Direction }}"{{ end }}>
+  {{ .Children }}
+</div>
+{{ end }}

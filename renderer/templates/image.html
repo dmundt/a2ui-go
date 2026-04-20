@@ -1,0 +1,10 @@
+{{ define "component.image" }}
+{{ if .Image }}
+<img id="{{ .ID }}" class="a2ui-image {{ .Class }}"
+  src="{{ .Image.URL }}"
+  alt=""
+  {{ if .Image.Fit }}data-fit="{{ .Image.Fit }}"{{ end }}
+  {{ if .Image.UsageHint }}data-usage-hint="{{ .Image.UsageHint }}"{{ end }}
+  style="{{ if .Image.Fit }}object-fit: {{ .Image.Fit }};{{ end }}">
+{{ end }}
+{{ end }}

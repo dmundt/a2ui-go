@@ -1,0 +1,13 @@
+{{ define "component.textfield" }}
+{{ if .TextField }}
+<label id="{{ .ID }}" class="a2ui-textfield {{ .Class }}">
+  {{ if .TextField.Label }}<span class="a2ui-textfield__label">{{ .TextField.Label }}</span>{{ end }}
+  <input
+    class="a2ui-input"
+    type="{{ if eq .TextField.TextFieldType "obscured" }}password{{ else if eq .TextField.TextFieldType "number" }}number{{ else if eq .TextField.TextFieldType "date" }}date{{ else }}text{{ end }}"
+    value="{{ .TextField.Value }}"
+    {{ if .TextField.ValidationRegexp }}pattern="{{ .TextField.ValidationRegexp }}"{{ end }}
+  >
+</label>
+{{ end }}
+{{ end }}

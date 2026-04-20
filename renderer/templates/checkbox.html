@@ -1,0 +1,8 @@
+{{ define "component.checkbox" }}
+{{ if .CheckBox }}
+<label id="{{ .ID }}" class="a2ui-checkbox {{ .Class }}">
+  <input type="checkbox" {{ if .CheckBox.Value }}checked{{ end }}>
+  {{ if .CheckBox.Label }}<span class="a2ui-checkbox__label">{{ .CheckBox.Label }}</span>{{ end }}
+</label>
+{{ end }}
+{{ end }}

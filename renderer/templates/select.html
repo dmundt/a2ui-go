@@ -1,0 +1,10 @@
+{{ define "component.select" }}
+<label id="{{ .ID }}" class="{{ .Class }}">
+  {{ if .Select.Label }}<span>{{ .Select.Label }}</span>{{ end }}
+  <select class="a2ui-select" name="{{ .Select.Name }}" {{ if .Select.Required }}required{{ end }}>
+    {{ range .Select.Options }}
+    <option value="{{ .Value }}" {{ if eq $.Select.Value .Value }}selected{{ end }}>{{ .Label }}</option>
+    {{ end }}
+  </select>
+</label>
+{{ end }}

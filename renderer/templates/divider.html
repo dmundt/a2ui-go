@@ -1,0 +1,5 @@
+{{ define "component.divider" }}
+{{ if .Divider }}
+<hr id="{{ .ID }}" class="a2ui-divider {{ if and .Divider (eq .Divider.Axis "vertical") }}a2ui-divider--vertical{{ end }} {{ .Class }}">
+{{ end }}
+{{ end }}

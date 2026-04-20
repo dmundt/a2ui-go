@@ -1,0 +1,5 @@
+{{ define "component.card" }}
+<div id="{{ .ID }}" class="a2ui-card {{ .Class }}">
+  {{ if .Card }}{{ .Card.ChildHTML }}{{ end }}
+</div>
+{{ end }}

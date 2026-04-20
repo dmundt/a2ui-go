@@ -1,0 +1,13 @@
+{{ define "component.multiplechoice" }}
+{{ if .MultipleChoice }}
+<fieldset id="{{ .ID }}" class="a2ui-multiplechoice {{ .Class }}">
+  {{ $isMulti := gt .MultipleChoice.MaxAllowedSelections 1 }}
+  {{ range .MultipleChoice.Options }}
+  <label class="a2ui-multiplechoice__option">
+    <input type="{{ if $isMulti }}checkbox{{ else }}radio{{ end }}" value="{{ .Value }}">
+    {{ .Label }}
+  </label>
+  {{ end }}
+</fieldset>
+{{ end }}
+{{ end }}

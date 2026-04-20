@@ -1,0 +1,6 @@
+{{ define "component.form" }}
+<form id="{{ .ID }}" class="{{ .Class }}" method="{{ if .Form.Method }}{{ .Form.Method }}{{ else }}post{{ end }}" action="{{ .Form.Action }}">
+  {{ .Children }}
+  <button class="a2ui-btn" type="submit">{{ if .Form.SubmitLabel }}{{ .Form.SubmitLabel }}{{ else }}Submit{{ end }}</button>
+</form>
+{{ end }}

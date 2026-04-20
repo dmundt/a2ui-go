@@ -1,0 +1,7 @@
+{{ define "component.column" }}
+<div id="{{ .ID }}" class="a2ui-column {{ .Class }}"
+  data-distribution="{{ if .Column }}{{ .Column.Distribution }}{{ end }}"
+  data-alignment="{{ if .Column }}{{ .Column.Alignment }}{{ end }}">
+  {{ .Children }}
+</div>
+{{ end }}

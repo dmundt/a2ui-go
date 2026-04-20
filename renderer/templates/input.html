@@ -1,0 +1,13 @@
+{{ define "component.input" }}
+<label id="{{ .ID }}" class="{{ .Class }}">
+  {{ if .Input.Label }}<span>{{ .Input.Label }}</span>{{ end }}
+  <input
+    class="a2ui-input"
+    name="{{ .Input.Name }}"
+    value="{{ .Input.Value }}"
+    placeholder="{{ .Input.Placeholder }}"
+    type="{{ if .Input.Type }}{{ .Input.Type }}{{ else }}text{{ end }}"
+    {{ if .Input.Required }}required{{ end }}
+  >
+</label>
+{{ end }}
