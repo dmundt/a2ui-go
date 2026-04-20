@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dmundt/au2ui-go/a2ui"
-	"github.com/dmundt/au2ui-go/renderer"
+	"github.com/dmundt/a2ui-go/a2ui"
+	"github.com/dmundt/a2ui-go/renderer"
 )
 
 func TestRenderSurfaceDeterministic(t *testing.T) {

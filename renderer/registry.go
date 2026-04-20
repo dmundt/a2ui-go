@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/dmundt/au2ui-go/a2ui"
+	"github.com/dmundt/a2ui-go/a2ui"
 )
 
 // Registry stores deterministic template mappings.

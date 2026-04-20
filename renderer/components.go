@@ -7,7 +7,7 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/dmundt/au2ui-go/a2ui"
+	"github.com/dmundt/a2ui-go/a2ui"
 )
 
 // ---------- View types (all values pre-resolved from BoundValues) ----------

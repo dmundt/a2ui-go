@@ -1,4 +1,4 @@
-module github.com/dmundt/au2ui-go
+module github.com/dmundt/a2ui-go
 
 go 1.23
 

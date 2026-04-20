@@ -3,8 +3,8 @@ package mcp
 import (
 	"encoding/json"
 
-	"github.com/dmundt/au2ui-go/internal/engine"
-	"github.com/dmundt/au2ui-go/renderer"
+	"github.com/dmundt/a2ui-go/internal/engine"
+	"github.com/dmundt/a2ui-go/renderer"
 )
 
 // Handlers exposes tool methods for MCP.

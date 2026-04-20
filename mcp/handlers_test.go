@@ -4,11 +4,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/dmundt/au2ui-go/internal/engine"
-	"github.com/dmundt/au2ui-go/internal/store"
-	"github.com/dmundt/au2ui-go/internal/stream"
-	"github.com/dmundt/au2ui-go/mcp"
-	"github.com/dmundt/au2ui-go/renderer"
+	"github.com/dmundt/a2ui-go/internal/engine"
+	"github.com/dmundt/a2ui-go/internal/store"
+	"github.com/dmundt/a2ui-go/internal/stream"
+	"github.com/dmundt/a2ui-go/mcp"
+	"github.com/dmundt/a2ui-go/renderer"
 )
 
 func TestHandlersRenderAndList(t *testing.T) {
@@ -44,5 +44,13 @@ func TestHandlersRenderAndList(t *testing.T) {
 	}
 	if !strings.Contains(templates, "page.html") {
 		t.Fatalf("unexpected templates output: %s", templates)
+	}
+
+	health, err := h.Health()
+	if err != nil {
+		t.Fatalf("health: %v", err)
+	}
+	if !strings.Contains(health, `"status":"ok"`) || !strings.Contains(health, `"version":"0.8"`) {
+		t.Fatalf("unexpected health output: %s", health)
 	}
 }

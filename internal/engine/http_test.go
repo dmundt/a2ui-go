@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dmundt/au2ui-go/a2ui"
-	"github.com/dmundt/au2ui-go/internal/engine"
-	"github.com/dmundt/au2ui-go/internal/store"
-	"github.com/dmundt/au2ui-go/internal/stream"
-	"github.com/dmundt/au2ui-go/renderer"
+	"github.com/dmundt/a2ui-go/a2ui"
+	"github.com/dmundt/a2ui-go/internal/engine"
+	"github.com/dmundt/a2ui-go/internal/store"
+	"github.com/dmundt/a2ui-go/internal/stream"
+	"github.com/dmundt/a2ui-go/renderer"
 )
 
 func setup(t *testing.T) *httptest.Server {
@@ -24,6 +24,19 @@ func setup(t *testing.T) *httptest.Server {
 	}
 	r := renderer.New(reg)
 	eng := engine.New(r, reg, store.NewPageStore(), stream.NewBroker(), "../../internal/ui")
+	mux := http.NewServeMux()
+	engine.RegisterHTTPHandlers(mux, eng)
+	return httptest.NewServer(mux)
+}
+
+func setupWithUIDir(t *testing.T, uiDir string) *httptest.Server {
+	t.Helper()
+	reg, err := renderer.NewRegistry("../../renderer/templates")
+	if err != nil {
+		t.Fatalf("registry: %v", err)
+	}
+	r := renderer.New(reg)
+	eng := engine.New(r, reg, store.NewPageStore(), stream.NewBroker(), uiDir)
 	mux := http.NewServeMux()
 	engine.RegisterHTTPHandlers(mux, eng)
 	return httptest.NewServer(mux)

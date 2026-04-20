@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dmundt/au2ui-go/a2ui"
+	"github.com/dmundt/a2ui-go/a2ui"
 )
 
 // Page holds the state for one A2UI surface.

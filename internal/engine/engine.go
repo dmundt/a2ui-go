@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dmundt/au2ui-go/a2ui"
-	"github.com/dmundt/au2ui-go/internal/store"
-	"github.com/dmundt/au2ui-go/internal/stream"
-	"github.com/dmundt/au2ui-go/renderer"
+	"github.com/dmundt/a2ui-go/a2ui"
+	"github.com/dmundt/a2ui-go/internal/store"
+	"github.com/dmundt/a2ui-go/internal/stream"
+	"github.com/dmundt/a2ui-go/renderer"
 )
 
 // Engine validates, applies updates, renders html, and persists pages.
@@ -484,8 +484,8 @@ func resolveFile(filename string) (string, error) {
 		filepath.Join(".", filename),
 		filepath.Join("..", filename),
 		filepath.Join("../..", filename),
-		filepath.Join("github.com/dmundt/au2ui-go", "..", filename),
-		filepath.Join("github.com/dmundt/au2ui-go/cmd/server", "..", "..", filename),
+		filepath.Join("github.com/dmundt/a2ui-go", "..", filename),
+		filepath.Join("github.com/dmundt/a2ui-go/cmd/server", "..", "..", filename),
 	}
 
 	exePath, err := os.Executable()

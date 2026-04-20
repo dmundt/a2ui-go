@@ -10,7 +10,7 @@ import (
 
 // StartStdio starts MCP JSON-RPC over stdio.
 func StartStdio(ctx context.Context, h *Handlers) error {
-	s := server.NewMCPServer("github.com/dmundt/au2ui-go", "0.8.0")
+	s := server.NewMCPServer("github.com/dmundt/a2ui-go", "0.8.0")
 
 	registerRenderTool := func(name string) {
 		s.AddTool(

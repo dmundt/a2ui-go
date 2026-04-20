@@ -11,11 +11,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/dmundt/au2ui-go/internal/engine"
-	"github.com/dmundt/au2ui-go/internal/store"
-	"github.com/dmundt/au2ui-go/internal/stream"
-	"github.com/dmundt/au2ui-go/mcp"
-	"github.com/dmundt/au2ui-go/renderer"
+	"github.com/dmundt/a2ui-go/internal/engine"
+	"github.com/dmundt/a2ui-go/internal/store"
+	"github.com/dmundt/a2ui-go/internal/stream"
+	"github.com/dmundt/a2ui-go/mcp"
+	"github.com/dmundt/a2ui-go/renderer"
 )
 
 func main() {
@@ -29,8 +29,8 @@ func main() {
 		log.Fatalf("template registry: %v", err)
 	}
 
-	uiDir := "github.com/dmundt/au2ui-go/internal/ui"
-	if resolvedUI, err := resolveDir("github.com/dmundt/au2ui-go/internal/ui"); err == nil {
+	uiDir := "github.com/dmundt/a2ui-go/internal/ui"
+	if resolvedUI, err := resolveDir("github.com/dmundt/a2ui-go/internal/ui"); err == nil {
 		uiDir = resolvedUI
 	}
 	log.Printf("resolved uiDir: %s", uiDir)
@@ -90,14 +90,14 @@ func resolveDir(parts ...string) (string, error) {
 	rel := filepath.Join(parts...)
 	candidates = append(candidates, rel)
 	candidates = append(candidates, filepath.Join("..", rel))
-	candidates = append(candidates, filepath.Join("github.com/dmundt/au2ui-go", rel))
+	candidates = append(candidates, filepath.Join("github.com/dmundt/a2ui-go", rel))
 
 	exePath, err := os.Executable()
 	if err == nil {
 		exeDir := filepath.Dir(exePath)
 		candidates = append(candidates, filepath.Join(exeDir, rel))
 		candidates = append(candidates, filepath.Join(exeDir, "..", rel))
-		candidates = append(candidates, filepath.Join(exeDir, "github.com/dmundt/au2ui-go", rel))
+		candidates = append(candidates, filepath.Join(exeDir, "github.com/dmundt/a2ui-go", rel))
 	}
 
 	for _, c := range candidates {

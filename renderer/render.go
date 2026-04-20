@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"html/template"
 
-	"github.com/dmundt/au2ui-go/a2ui"
+	"github.com/dmundt/a2ui-go/a2ui"
 )
 
 // Renderer renders A2UI components into HTML.
