@@ -1,32 +1,41 @@
 {{ define "component.tabs" }}
 <div id="{{ .ID }}" class="a2ui-tabs {{ .Class }}">
   {{ if .Tabs }}
-  <div class="a2ui-tabs__nav" role="tablist">
-    {{ range $i, $tab := .Tabs.Items }}
-    <button class="a2ui-tabs__tab{{ if eq $i 0 }} a2ui-tabs__tab--active{{ end }}" role="tab" data-tab-idx="{{ $i }}">{{ $tab.Title }}</button>
-    {{ end }}
-  </div>
+  {{ range $i, $tab := .Tabs.Items }}
+  <input class="a2ui-tabs__radio" type="radio" name="{{ $.ID }}-tabs" id="{{ $.ID }}-tab-{{ $i }}" {{ if eq $i 0 }}checked{{ end }}>
+  {{ end }}
+
   <div class="a2ui-tabs__panels">
+    <div class="a2ui-tabs__nav" role="tablist">
+      {{ range $i, $tab := .Tabs.Items }}
+      <label class="a2ui-tabs__tab" role="tab" for="{{ $.ID }}-tab-{{ $i }}">{{ $tab.Title }}</label>
+      {{ end }}
+    </div>
     {{ range $i, $tab := .Tabs.Items }}
-    <div class="a2ui-tabs__panel{{ if ne $i 0 }} a2ui-tabs__panel--hidden{{ end }}" data-panel-idx="{{ $i }}">{{ $tab.Content }}</div>
+    <div class="a2ui-tabs__panel" data-panel-idx="{{ $i }}">{{ $tab.Content }}</div>
     {{ end }}
   </div>
+
+  <style>
+    #{{ .ID }} .a2ui-tabs__radio {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #{{ .ID }} .a2ui-tabs__panel {
+      display: none;
+    }
+    {{ range $i, $tab := .Tabs.Items }}
+    #{{ $.ID }}-tab-{{ $i }}:checked ~ .a2ui-tabs__panels .a2ui-tabs__nav label[for="{{ $.ID }}-tab-{{ $i }}"] {
+      background: var(--a2ui-color-primary);
+      border-color: var(--a2ui-color-primary);
+      color: var(--a2ui-color-on-primary);
+    }
+    #{{ $.ID }}-tab-{{ $i }}:checked ~ .a2ui-tabs__panels .a2ui-tabs__panel[data-panel-idx="{{ $i }}"] {
+      display: block;
+    }
+    {{ end }}
+  </style>
   {{ end }}
 </div>
-<script>
-(function(){
-  var el = document.getElementById("{{ .ID }}");
-  if (!el) return;
-  var tabs = el.querySelectorAll(".a2ui-tabs__tab");
-  var panels = el.querySelectorAll(".a2ui-tabs__panel");
-  tabs.forEach(function(tab, i){
-    tab.addEventListener("click", function(){
-      tabs.forEach(function(t){ t.classList.remove("a2ui-tabs__tab--active"); });
-      panels.forEach(function(p){ p.classList.add("a2ui-tabs__panel--hidden"); });
-      tab.classList.add("a2ui-tabs__tab--active");
-      panels[i].classList.remove("a2ui-tabs__panel--hidden");
-    });
-  });
-})();
-</script>
 {{ end }}

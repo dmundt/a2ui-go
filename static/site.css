@@ -282,9 +282,12 @@ h5.a2ui-text { font-size: var(--a2ui-font-size-s); }
 .a2ui-tabs__nav {
 	display: flex;
 	gap: var(--a2ui-spacing-s);
+	flex-wrap: wrap;
 }
 
 .a2ui-tabs__tab {
+	display: inline-flex;
+	list-style: none;
 	border: var(--a2ui-border);
 	border-radius: 999px;
 	background: var(--a2ui-color-secondary);
@@ -293,14 +296,17 @@ h5.a2ui-text { font-size: var(--a2ui-font-size-s); }
 	cursor: pointer;
 }
 
-.a2ui-tabs__tab--active {
-	background: var(--a2ui-color-primary);
-	border-color: var(--a2ui-color-primary);
-	color: var(--a2ui-color-on-primary);
+.a2ui-tabs__tab::-webkit-details-marker,
+.a2ui-tabs__tab::marker {
+	display: none;
+	content: "";
 }
 
-.a2ui-tabs__panel--hidden {
-	display: none;
+.a2ui-tabs__panel {
+	border: var(--a2ui-border);
+	border-radius: calc(var(--a2ui-border-radius) * 2);
+	padding: var(--a2ui-spacing-s);
+	margin-top: var(--a2ui-spacing-s);
 }
 
 .a2ui-modal__content {
@@ -309,6 +315,17 @@ h5.a2ui-text { font-size: var(--a2ui-font-size-s); }
 	border-radius: calc(var(--a2ui-border-radius) * 2);
 	padding: var(--a2ui-spacing-m);
 	background: var(--a2ui-color-surface);
+}
+
+.a2ui-modal__details > .a2ui-modal__trigger {
+	list-style: none;
+	display: inline-flex;
+}
+
+.a2ui-modal__details > .a2ui-modal__trigger::-webkit-details-marker,
+.a2ui-modal__details > .a2ui-modal__trigger::marker {
+	display: none;
+	content: "";
 }
 
 .a2ui-table {
@@ -321,6 +338,26 @@ h5.a2ui-text { font-size: var(--a2ui-font-size-s); }
 	border: var(--a2ui-border);
 	padding: var(--a2ui-spacing-s);
 	text-align: left;
+}
+
+.a2ui-table tr.a2ui-table__row-selectable {
+	cursor: pointer;
+	transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.a2ui-table tr.a2ui-table__row-selectable:focus-visible {
+	outline: none;
+	background: color-mix(in oklab, var(--a2ui-color-primary) 14%, transparent);
+	box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--a2ui-color-primary) 50%, transparent);
+}
+
+.a2ui-table tr.a2ui-table__row-selectable:active {
+	background: color-mix(in oklab, var(--a2ui-color-primary) 12%, transparent);
+}
+
+.a2ui-table tr.a2ui-table__row-selected {
+	background: color-mix(in oklab, var(--a2ui-color-primary) 16%, transparent);
+	box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--a2ui-color-primary) 55%, transparent);
 }
 
 /* Scoped polish for composed table demo in /composites/table */

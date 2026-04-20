@@ -1,19 +1,10 @@
 {{ define "component.modal" }}
 <div id="{{ .ID }}" class="a2ui-modal {{ .Class }}">
   {{ if .Modal }}
-  <div class="a2ui-modal__trigger">{{ .Modal.EntryPointHTML }}</div>
-  <div class="a2ui-modal__content" hidden>{{ .Modal.ContentHTML }}</div>
+  <details class="a2ui-modal__details">
+    <summary class="a2ui-modal__trigger">{{ .Modal.EntryPointHTML }}</summary>
+    <div class="a2ui-modal__content">{{ .Modal.ContentHTML }}</div>
+  </details>
   {{ end }}
 </div>
-<script>
-(function(){
-  var el = document.getElementById("{{ .ID }}");
-  if (!el) return;
-  var trigger = el.querySelector(".a2ui-modal__trigger");
-  var content = el.querySelector(".a2ui-modal__content");
-  if (trigger && content) {
-    trigger.addEventListener("click", function(){ content.hidden = !content.hidden; });
-  }
-})();
-</script>
 {{ end }}

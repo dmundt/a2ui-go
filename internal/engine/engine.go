@@ -238,12 +238,113 @@ func (e *Engine) InspectTableRow(pageID, tableID string, rowIndex int, targetID 
 		return "", fmt.Errorf("row index out of range")
 	}
 
+	if tableID == "items-table" && targetID == "items-inspector-form" {
+		var rowAction *a2ui.ActionDef
+		if tableComp.Table.RowActions != nil && rowIndex < len(tableComp.Table.RowActions) {
+			rowAction = tableComp.Table.RowActions[rowIndex]
+		}
+		if inspectorComps, rootID, ok := buildItemInspectorComponents(targetID, rowAction, page.DataModel); ok {
+			htmlOut, err := e.renderer.RenderSurface(inspectorComps, page.DataModel, rootID)
+			if err != nil {
+				return "", err
+			}
+			return string(htmlOut), nil
+		}
+	}
+
 	inspectorComps, rootID := buildInspectorComponents(targetID, tableComp.Table.Headers, tableComp.Table.Rows[rowIndex])
 	htmlOut, err := e.renderer.RenderSurface(inspectorComps, page.DataModel, rootID)
 	if err != nil {
 		return "", err
 	}
 	return string(htmlOut), nil
+}
+
+func buildItemInspectorComponents(targetID string, rowAction *a2ui.ActionDef, dm a2ui.DataModel) (map[string]*a2ui.Component, string, bool) {
+	if rowAction == nil {
+		return nil, "", false
+	}
+
+	ctx := make(map[string]string)
+	for _, entry := range rowAction.Context {
+		ctx[entry.Key] = entry.Value.Str(dm)
+	}
+
+	required := []string{"itemId", "itemName", "itemCategory", "itemStatus", "itemSerial", "itemPurchaseDate", "itemValue", "locationBuilding", "locationFloor", "locationName"}
+	for _, key := range required {
+		if strings.TrimSpace(ctx[key]) == "" {
+			return nil, "", false
+		}
+	}
+
+	literalStr := func(s string) *a2ui.BoundValue { return &a2ui.BoundValue{LiteralString: &s} }
+	comps := make(map[string]*a2ui.Component)
+
+	formID := targetID
+	titleID := "items-inspector-title"
+
+	comps[titleID] = &a2ui.Component{
+		ID:   titleID,
+		Type: a2ui.ComponentText,
+		Text: &a2ui.TextProps{Text: literalStr("Item Inspector"), UsageHint: "h3"},
+	}
+
+	type pair struct {
+		labelID string
+		valueID string
+		label   string
+		value   string
+	}
+
+	pairs := []pair{
+		{labelID: "inspector-item-id-label", valueID: "inspector-item-id", label: "Asset ID", value: ctx["itemId"]},
+		{labelID: "inspector-item-name-label", valueID: "inspector-item-name", label: "Name", value: ctx["itemName"]},
+		{labelID: "inspector-item-cat-label", valueID: "inspector-item-cat", label: "Category", value: ctx["itemCategory"]},
+		{labelID: "inspector-item-status-label", valueID: "inspector-item-status", label: "Status", value: ctx["itemStatus"]},
+		{labelID: "inspector-item-serial-label", valueID: "inspector-item-serial", label: "Serial Number", value: ctx["itemSerial"]},
+		{labelID: "inspector-item-purchase-label", valueID: "inspector-item-purchase", label: "Purchase Date", value: ctx["itemPurchaseDate"]},
+		{labelID: "inspector-item-value-label", valueID: "inspector-item-value", label: "Value", value: ctx["itemValue"]},
+	}
+
+	for _, p := range pairs {
+		comps[p.labelID] = &a2ui.Component{ID: p.labelID, Type: a2ui.ComponentText, Text: &a2ui.TextProps{Text: literalStr(p.label)}}
+		comps[p.valueID] = &a2ui.Component{ID: p.valueID, Type: a2ui.ComponentText, Text: &a2ui.TextProps{Text: literalStr(p.value)}}
+	}
+
+	locLabelID := "inspector-item-location-label"
+	locID := "inspector-item-location"
+	crumbIDs := []string{"inspector-item-location-crumb-building", "inspector-item-location-crumb-sep-1", "inspector-item-location-crumb-floor", "inspector-item-location-crumb-sep-2", "inspector-item-location-crumb-name"}
+
+	comps[locLabelID] = &a2ui.Component{ID: locLabelID, Type: a2ui.ComponentText, Text: &a2ui.TextProps{Text: literalStr("Location")}}
+	comps[crumbIDs[0]] = &a2ui.Component{ID: crumbIDs[0], Type: a2ui.ComponentText, Text: &a2ui.TextProps{Text: literalStr(ctx["locationBuilding"])}}
+	comps[crumbIDs[1]] = &a2ui.Component{ID: crumbIDs[1], Type: a2ui.ComponentText, Text: &a2ui.TextProps{Text: literalStr(">")}}
+	comps[crumbIDs[2]] = &a2ui.Component{ID: crumbIDs[2], Type: a2ui.ComponentText, Text: &a2ui.TextProps{Text: literalStr(ctx["locationFloor"])}}
+	comps[crumbIDs[3]] = &a2ui.Component{ID: crumbIDs[3], Type: a2ui.ComponentText, Text: &a2ui.TextProps{Text: literalStr(">")}}
+	comps[crumbIDs[4]] = &a2ui.Component{ID: crumbIDs[4], Type: a2ui.ComponentText, Text: &a2ui.TextProps{Text: literalStr(ctx["locationName"])}}
+	comps[locID] = &a2ui.Component{ID: locID, Type: a2ui.ComponentList, List: &a2ui.ListProps{Direction: "horizontal", Children: a2ui.Children{ExplicitList: crumbIDs}}}
+
+	formChildren := []string{
+		titleID,
+		"inspector-item-id-label", "inspector-item-id",
+		"inspector-item-name-label", "inspector-item-name",
+		"inspector-item-cat-label", "inspector-item-cat",
+		"inspector-item-status-label", "inspector-item-status",
+		locLabelID, locID,
+		"inspector-item-serial-label", "inspector-item-serial",
+		"inspector-item-purchase-label", "inspector-item-purchase",
+		"inspector-item-value-label", "inspector-item-value",
+	}
+
+	comps[formID] = &a2ui.Component{
+		ID:   formID,
+		Type: a2ui.ComponentColumn,
+		Column: &a2ui.ColumnProps{
+			ClassName: "a2ui-inspector",
+			Children:  a2ui.Children{ExplicitList: formChildren},
+		},
+	}
+
+	return comps, formID, true
 }
 
 // ListPages returns persisted pages.

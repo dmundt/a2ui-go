@@ -385,6 +385,9 @@ type SelectOption struct {
 type TableProps struct {
 	Headers []string   `json:"headers"`
 	Rows    [][]string `json:"rows"`
+	// RowActions optionally makes table rows clickable. Each action index maps
+	// to the same row index in Rows.
+	RowActions []*ActionDef `json:"rowActions,omitempty"`
 }
 
 // FormProps configures legacy Form component.

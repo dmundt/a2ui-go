@@ -5,7 +5,12 @@
   </thead>
   <tbody>
     {{ range $rowIndex, $row := .Table.Rows }}
-    <tr>{{ range $row }}<td>{{ . }}</td>{{ end }}</tr>
+    {{ $action := index $.Table.Actions $rowIndex }}
+    <tr
+      {{ if or $action.ActionName $action.LinkURL }}class="a2ui-table__row-selectable"{{ end }}
+      {{ if or $action.ActionName $action.LinkURL }}tabindex="0"{{ end }}
+      {{ if and (eq $.ID "items-table") (eq $action.ActionName "inspect_item") }}role="button" hx-get="/inspect/table-row?page_id=dynamic-asset-management-app&table_id=items-table&row={{ $rowIndex }}&target_id=items-inspector-form" hx-target="#items-inspector-form" hx-swap="outerHTML"{{ else if $action.ActionName }}data-action="{{ $action.ActionName }}" hx-post="/action" hx-vals='{{ $action.ActionJSON }}' hx-swap="none"{{ end }}
+    >{{ range $row }}<td>{{ . }}</td>{{ end }}</tr>
     {{ end }}
   </tbody>
 </table>

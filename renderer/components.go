@@ -109,6 +109,13 @@ type tabsView struct {
 type tableView struct {
 	Headers []template.HTML
 	Rows    [][]template.HTML
+	Actions []tableRowActionView
+}
+
+type tableRowActionView struct {
+	ActionName string
+	ActionJSON string
+	LinkURL    string
 }
 
 // componentView is passed to every HTML template.
@@ -142,6 +149,58 @@ type componentView struct {
 	Select *a2ui.SelectProps
 	Table  *tableView
 	Form   *a2ui.FormProps
+}
+
+func buildActionView(action *a2ui.ActionDef, dm a2ui.DataModel) tableRowActionView {
+	if action == nil {
+		return tableRowActionView{}
+	}
+
+	actionName := action.Name
+	actionJSON := "{}"
+	linkURL := ""
+
+	if strings.HasPrefix(actionName, "link:") {
+		linkURL = strings.TrimPrefix(actionName, "link:")
+		actionName = ""
+	}
+
+	ctx := make(map[string]string)
+	for _, e := range action.Context {
+		ctx[e.Key] = e.Value.Str(dm)
+	}
+	if b, err := json.Marshal(ctx); err == nil {
+		actionJSON = string(b)
+	}
+
+	return tableRowActionView{ActionName: actionName, ActionJSON: actionJSON, LinkURL: linkURL}
+}
+
+func inferRowActionFromCells(components map[string]*a2ui.Component, row []string, dm a2ui.DataModel) tableRowActionView {
+	for _, cellID := range row {
+		cellComp, ok := components[cellID]
+		if !ok {
+			continue
+		}
+
+		if cellComp.Button != nil && cellComp.Button.Action != nil {
+			return buildActionView(cellComp.Button.Action, dm)
+		}
+
+		if cellComp.Row == nil {
+			continue
+		}
+
+		for _, childID := range cellComp.Row.Children.ExplicitList {
+			childComp, ok := components[childID]
+			if !ok || childComp.Button == nil || childComp.Button.Action == nil {
+				continue
+			}
+			return buildActionView(childComp.Button.Action, dm)
+		}
+	}
+
+	return tableRowActionView{}
 }
 
 // RenderComponent renders a single typed component with its children resolved from the buffer.
@@ -219,29 +278,13 @@ func (r *Renderer) buildView(components map[string]*a2ui.Component, dm a2ui.Data
 					return view, err
 				}
 			}
-			actionName := ""
-			actionJSON := "{}"
-			linkURL := ""
-			if c.Button.Action != nil {
-				actionName = c.Button.Action.Name
-				if strings.HasPrefix(actionName, "link:") {
-					linkURL = strings.TrimPrefix(actionName, "link:")
-					actionName = ""
-				}
-				ctx := make(map[string]string)
-				for _, e := range c.Button.Action.Context {
-					ctx[e.Key] = e.Value.Str(dm)
-				}
-				if b, err := json.Marshal(ctx); err == nil {
-					actionJSON = string(b)
-				}
-			}
+			actionView := buildActionView(c.Button.Action, dm)
 			view.Button = &buttonView{
 				ChildHTML:  childHTML,
 				Primary:    c.Button.Primary,
-				ActionName: actionName,
-				ActionJSON: actionJSON,
-				LinkURL:    linkURL,
+				ActionName: actionView.ActionName,
+				ActionJSON: actionView.ActionJSON,
+				LinkURL:    actionView.LinkURL,
 			}
 		}
 
@@ -363,6 +406,15 @@ func (r *Renderer) buildView(components map[string]*a2ui.Component, dm a2ui.Data
 					renderedRow = append(renderedRow, cell)
 				}
 				tv.Rows = append(tv.Rows, renderedRow)
+
+				rowIdx := len(tv.Rows) - 1
+				rowAction := tableRowActionView{}
+				if rowIdx < len(c.Table.RowActions) {
+					rowAction = buildActionView(c.Table.RowActions[rowIdx], dm)
+				} else {
+					rowAction = inferRowActionFromCells(components, row, dm)
+				}
+				tv.Actions = append(tv.Actions, rowAction)
 			}
 			view.Table = tv
 		}
