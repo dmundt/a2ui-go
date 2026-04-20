@@ -33,7 +33,8 @@ func TestRenderAndPageEndpoint(t *testing.T) {
 	srv := setup(t)
 	defer srv.Close()
 
-	jsonl := `{"version":"0.8","type":"begin","page_id":"home","surface":{"id":"s1","title":"Home","root":{"id":"root","type":"Text","text":{"value":"Hello"}}}}`
+	jsonl := `{"surfaceUpdate":{"surfaceId":"home","components":[{"id":"root","component":{"Text":{"text":{"literalString":"Hello"}}}}]}}
+{"beginRendering":{"surfaceId":"home","root":"root"}}`
 	resp, err := http.Post(srv.URL+"/render/a2ui", "application/jsonl", strings.NewReader(jsonl))
 	if err != nil {
 		t.Fatalf("post render: %v", err)
@@ -71,7 +72,7 @@ func TestCatalogIndexEndpointRendersFromJSONL(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("unexpected catalog status: %d body=%s", resp.StatusCode, content)
 	}
-	if !strings.Contains(content, "A2UI v0.8 Reference Component Catalog") || !strings.Contains(content, "/catalog/button") {
+	if !strings.Contains(content, "A2UI Component Gallery") || !strings.Contains(content, "/catalog/button") {
 		t.Fatalf("unexpected catalog index content: %s", content)
 	}
 }
@@ -132,7 +133,8 @@ func TestSSEStreamReceivesUpdate(t *testing.T) {
 		done <- ""
 	}()
 
-	jsonl := `{"version":"0.8","type":"begin","page_id":"sse","surface":{"id":"sse1","title":"SSE","root":{"id":"root","type":"Text","text":{"value":"Tick"}}}}`
+	jsonl := `{"surfaceUpdate":{"surfaceId":"sse","components":[{"id":"root","component":{"Text":{"text":{"literalString":"Tick"}}}}]}}
+{"beginRendering":{"surfaceId":"sse","root":"root"}}`
 	resp, err := http.Post(srv.URL+"/render/a2ui", "application/jsonl", strings.NewReader(jsonl))
 	if err != nil {
 		t.Fatalf("trigger render: %v", err)
@@ -154,7 +156,8 @@ func TestTableInspectorEndpoint(t *testing.T) {
 	srv := setup(t)
 	defer srv.Close()
 
-	jsonl := `{"version":"0.8","type":"begin","page_id":"dashboard","surface":{"id":"dashboard-surface","title":"Dashboard","root":{"id":"root","type":"Column","column":{"gap":"12px"},"children":[{"id":"services-table","type":"Table","attrs":{"data-inspector-endpoint":"/inspect/table-row","data-page-id":"dashboard","data-inspector-target":"#service-inspector","data-inspector-component-id":"service-inspector"},"table":{"headers":["Service","Version","Status"],"rows":[["api","v1.8.2","healthy"],["worker","v1.8.2","healthy"]]}},{"id":"service-inspector","type":"Column","column":{"gap":"8px"},"children":[{"id":"placeholder","type":"Text","text":{"value":"Select a row."}}]}]}}}`
+	jsonl := `{"surfaceUpdate":{"surfaceId":"dashboard","components":[{"id":"placeholder","component":{"Text":{"text":{"literalString":"Select a row."}}}},{"id":"service-inspector","component":{"Column":{"children":{"explicitList":["placeholder"]}}}},{"id":"services-table","component":{"Table":{"headers":["Service","Version","Status"],"rows":[["api","v1.8.2","healthy"],["worker","v1.8.2","healthy"]]}}},{"id":"root","component":{"Column":{"children":{"explicitList":["services-table","service-inspector"]}}}}]}}
+{"beginRendering":{"surfaceId":"dashboard","root":"root"}}`
 	resp, err := http.Post(srv.URL+"/render/a2ui", "application/jsonl", strings.NewReader(jsonl))
 	if err != nil {
 		t.Fatalf("post render: %v", err)
@@ -175,7 +178,7 @@ func TestTableInspectorEndpoint(t *testing.T) {
 	if inspectResp.StatusCode != http.StatusOK {
 		t.Fatalf("unexpected inspector status: %d body=%s", inspectResp.StatusCode, content)
 	}
-	if !strings.Contains(content, "Selected Service Inspector") || !strings.Contains(content, "api") || !strings.Contains(content, "healthy") {
+	if !strings.Contains(content, "Selected Row Inspector") || !strings.Contains(content, "api") || !strings.Contains(content, "healthy") {
 		t.Fatalf("unexpected inspector content: %s", content)
 	}
 }

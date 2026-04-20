@@ -20,7 +20,8 @@ func TestHandlersRenderAndList(t *testing.T) {
 	eng := engine.New(r, reg, store.NewPageStore(), stream.NewBroker(), "../internal/ui")
 	h := mcp.NewHandlers(eng, reg)
 
-	jsonl := `{"version":"0.8","type":"begin","page_id":"p1","surface":{"id":"s1","title":"T","root":{"id":"root","type":"Text","text":{"value":"Hello"}}}}`
+	jsonl := `{"surfaceUpdate":{"surfaceId":"p1","components":[{"id":"root","component":{"Text":{"text":{"literalString":"Hello"}}}}]}}
+{"beginRendering":{"surfaceId":"p1","root":"root"}}`
 	html, err := h.Render(jsonl)
 	if err != nil {
 		t.Fatalf("render: %v", err)

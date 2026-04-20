@@ -257,6 +257,9 @@ func RegisterHTTPHandlers(mux *http.ServeMux, eng *Engine) {
 		w.Header().Set("Content-Type", "text/event-stream")
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Header().Set("Connection", "keep-alive")
+		// Send an initial comment frame so clients receive headers immediately.
+		_, _ = w.Write([]byte(": connected\n\n"))
+		flusher.Flush()
 
 		ch, cancel := eng.broker.Subscribe()
 		defer cancel()

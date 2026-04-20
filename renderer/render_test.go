@@ -18,24 +18,27 @@ func TestRenderSurfaceDeterministic(t *testing.T) {
 	}
 	r := renderer.New(reg)
 
-	s := a2ui.Surface{
-		ID:    "s1",
-		Title: "Test",
-		Root: a2ui.Component{
+	hello := "hello"
+	components := map[string]*a2ui.Component{
+		"root": {
 			ID:   "root",
 			Type: a2ui.ComponentColumn,
 			Column: &a2ui.ColumnProps{
-				Gap: "8px",
+				Children: a2ui.Children{ExplicitList: []string{"t1"}},
 			},
-			Children: []a2ui.Component{{ID: "t1", Type: a2ui.ComponentText, Text: &a2ui.TextProps{Value: "hello"}}},
+		},
+		"t1": {
+			ID:   "t1",
+			Type: a2ui.ComponentText,
+			Text: &a2ui.TextProps{Text: &a2ui.BoundValue{LiteralString: &hello}},
 		},
 	}
 
-	h1, err := r.RenderSurface(s)
+	h1, err := r.RenderSurface(components, a2ui.DataModel{}, "root")
 	if err != nil {
 		t.Fatalf("render1: %v", err)
 	}
-	h2, err := r.RenderSurface(s)
+	h2, err := r.RenderSurface(components, a2ui.DataModel{}, "root")
 	if err != nil {
 		t.Fatalf("render2: %v", err)
 	}
