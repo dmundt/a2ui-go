@@ -113,14 +113,6 @@ func StartStdio(ctx context.Context, h *Handlers) error {
 	registerFetchCompositeTool("a2ui_fetch_composite")
 	registerHealthTool("a2ui_health")
 
-	// Backward-compatible aliases for clients still targeting dotted names.
-	registerRenderTool("a2ui.render")
-	registerPagesTool("a2ui.list_pages")
-	registerTemplatesTool("a2ui.list_templates")
-	registerListCompositesTool("a2ui.list_composites")
-	registerFetchCompositeTool("a2ui.fetch_composite")
-	registerHealthTool("a2ui.health")
-
 	stdio := server.NewStdioServer(s)
 	return stdio.Listen(ctx, os.Stdin, os.Stdout)
 }
