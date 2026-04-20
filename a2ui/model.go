@@ -253,6 +253,7 @@ type ColumnProps struct {
 	Children     Children `json:"children"`
 	Distribution string   `json:"distribution,omitempty"`
 	Alignment    string   `json:"alignment,omitempty"`
+	ClassName    string   `json:"className,omitempty"`
 }
 
 // ListProps configures List.

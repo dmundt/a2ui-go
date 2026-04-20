@@ -106,6 +106,11 @@ type tabsView struct {
 	Items []tabItemView
 }
 
+type tableView struct {
+	Headers []template.HTML
+	Rows    [][]template.HTML
+}
+
 // componentView is passed to every HTML template.
 type componentView struct {
 	ID    string
@@ -135,7 +140,7 @@ type componentView struct {
 	// Legacy components (unchanged props)
 	Input  *a2ui.InputProps
 	Select *a2ui.SelectProps
-	Table  *a2ui.TableProps
+	Table  *tableView
 	Form   *a2ui.FormProps
 }
 
@@ -180,6 +185,7 @@ func (r *Renderer) buildView(components map[string]*a2ui.Component, dm a2ui.Data
 				return view, err
 			}
 			view.Children = ch
+			view.Class = c.Column.ClassName
 			view.Column = &columnView{Distribution: c.Column.Distribution, Alignment: c.Column.Alignment}
 		}
 
@@ -338,7 +344,28 @@ func (r *Renderer) buildView(components map[string]*a2ui.Component, dm a2ui.Data
 	case a2ui.ComponentSelect:
 		view.Select = c.Select
 	case a2ui.ComponentTable:
-		view.Table = c.Table
+		if c.Table != nil {
+			tv := &tableView{}
+			for _, hID := range c.Table.Headers {
+				h, err := r.renderByID(components, dm, hID)
+				if err != nil {
+					return view, err
+				}
+				tv.Headers = append(tv.Headers, h)
+			}
+			for _, row := range c.Table.Rows {
+				var renderedRow []template.HTML
+				for _, cellID := range row {
+					cell, err := r.renderByID(components, dm, cellID)
+					if err != nil {
+						return view, err
+					}
+					renderedRow = append(renderedRow, cell)
+				}
+				tv.Rows = append(tv.Rows, renderedRow)
+			}
+			view.Table = tv
+		}
 	case a2ui.ComponentForm:
 		view.Form = c.Form
 	}

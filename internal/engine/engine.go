@@ -145,6 +145,107 @@ func (e *Engine) renderAndPublish(p store.Page) (string, error) {
 	return string(rendered), nil
 }
 
+// CreateSurface creates an empty surface when it does not already exist.
+func (e *Engine) CreateSurface(surfaceID string) (store.Page, error) {
+	id := strings.TrimSpace(surfaceID)
+	if id == "" {
+		return store.Page{}, fmt.Errorf("missing surface id")
+	}
+	if p, ok := e.store.Get(id); ok {
+		return p, nil
+	}
+	p := store.Page{
+		ID:         id,
+		Components: make(map[string]*a2ui.Component),
+		DataModel:  make(a2ui.DataModel),
+		UpdatedAt:  time.Now().UTC(),
+	}
+	e.store.Upsert(p)
+	return p, nil
+}
+
+// DeleteSurface removes one surface by id and reports whether it existed.
+func (e *Engine) DeleteSurface(surfaceID string) bool {
+	id := strings.TrimSpace(surfaceID)
+	if id == "" {
+		return false
+	}
+	if _, ok := e.store.Get(id); !ok {
+		return false
+	}
+	e.store.Delete(id)
+	return true
+}
+
+// ResetRuntime clears all in-memory surfaces and returns the number removed.
+func (e *Engine) ResetRuntime() int {
+	pages := e.store.List()
+	for _, p := range pages {
+		e.store.Delete(p.ID)
+	}
+	return len(pages)
+}
+
+// GetPage returns one surface from the in-memory store.
+func (e *Engine) GetPage(surfaceID string) (store.Page, bool) {
+	id := strings.TrimSpace(surfaceID)
+	if id == "" {
+		return store.Page{}, false
+	}
+	return e.store.Get(id)
+}
+
+// RenderSurfaceByID renders one in-memory surface by id.
+func (e *Engine) RenderSurfaceByID(surfaceID string) (string, error) {
+	p, ok := e.GetPage(surfaceID)
+	if !ok {
+		return "", fmt.Errorf("surface %q not found", strings.TrimSpace(surfaceID))
+	}
+	if strings.TrimSpace(p.RootID) == "" {
+		return "", fmt.Errorf("surface %q has no root", p.ID)
+	}
+	rendered, err := e.renderer.RenderSurface(p.Components, p.DataModel, p.RootID)
+	if err != nil {
+		return "", err
+	}
+	p.HTML = string(rendered)
+	p.UpdatedAt = time.Now().UTC()
+	e.store.Upsert(p)
+	return p.HTML, nil
+}
+
+// InspectTableRow renders the inline inspector HTML for a table row.
+func (e *Engine) InspectTableRow(pageID, tableID string, rowIndex int, targetID string) (string, error) {
+	pageID = strings.TrimSpace(pageID)
+	tableID = strings.TrimSpace(tableID)
+	targetID = strings.TrimSpace(targetID)
+	if targetID == "" {
+		targetID = "inspector-target"
+	}
+	if pageID == "" || tableID == "" {
+		return "", fmt.Errorf("missing page id or table id")
+	}
+
+	page, ok := e.store.Get(pageID)
+	if !ok {
+		return "", fmt.Errorf("page not found")
+	}
+	tableComp := page.Components[tableID]
+	if tableComp == nil || tableComp.Table == nil {
+		return "", fmt.Errorf("table not found")
+	}
+	if rowIndex < 0 || rowIndex >= len(tableComp.Table.Rows) {
+		return "", fmt.Errorf("row index out of range")
+	}
+
+	inspectorComps, rootID := buildInspectorComponents(targetID, tableComp.Table.Headers, tableComp.Table.Rows[rowIndex])
+	htmlOut, err := e.renderer.RenderSurface(inspectorComps, page.DataModel, rootID)
+	if err != nil {
+		return "", err
+	}
+	return string(htmlOut), nil
+}
+
 // ListPages returns persisted pages.
 func (e *Engine) ListPages() []store.Page {
 	return e.store.List()
@@ -225,13 +326,43 @@ func (e *Engine) renderUIFile(fileName string) (string, bool, error) {
 func addRenderTimingBadge(renderedHTML string, elapsedMillis int64) string {
 	badge := fmt.Sprintf(`<p class="a2ui-render-timing" aria-label="rendering-time">Render time: %d ms</p>`, elapsedMillis)
 
+	return appendBeforeBodyEnd(renderedHTML, badge)
+}
+
+func appendBeforeBodyEnd(renderedHTML, fragment string) string {
 	lower := strings.ToLower(renderedHTML)
 	idx := strings.LastIndex(lower, "</body>")
 	if idx == -1 {
-		return renderedHTML + badge
+		return renderedHTML + fragment
 	}
 
-	return renderedHTML[:idx] + badge + renderedHTML[idx:]
+	return renderedHTML[:idx] + fragment + renderedHTML[idx:]
+}
+
+func addDynamicPagesSection(renderedHTML string, pages []store.Page) string {
+	ids := make([]string, 0, len(pages))
+	for _, p := range pages {
+		id := strings.TrimSpace(p.ID)
+		if id == "" || id == "ui-index-surface" {
+			continue
+		}
+		ids = append(ids, id)
+	}
+	if len(ids) == 0 {
+		return renderedHTML
+	}
+
+	sort.Strings(ids)
+
+	var sb strings.Builder
+	sb.WriteString(`<section class="a2ui-card" id="dynamic-pages"><h3 class="a2ui-text">Dynamic Pages (In Memory)</h3><ul class="a2ui-list">`)
+	for _, id := range ids {
+		escapedID := html.EscapeString(id)
+		sb.WriteString(`<li><a class="a2ui-link" href="/dynamic/` + escapedID + `">` + escapedID + `</a></li>`)
+	}
+	sb.WriteString(`</ul></section>`)
+
+	return appendBeforeBodyEnd(renderedHTML, sb.String())
 }
 
 func (e *Engine) loadPageFromUIFile(pageID string) (store.Page, bool, error) {
@@ -317,6 +448,29 @@ func RegisterHTTPHandlers(router chi.Router, eng *Engine) {
 		_, _ = w.Write([]byte(p.HTML))
 	})
 
+	router.Get("/dynamic", func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "missing dynamic page id", http.StatusBadRequest)
+	})
+
+	router.Get("/dynamic/", func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "missing dynamic page id", http.StatusBadRequest)
+	})
+
+	router.Get("/dynamic/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := strings.TrimSpace(chi.URLParam(r, "id"))
+		if id == "" {
+			http.Error(w, "missing dynamic page id", http.StatusBadRequest)
+			return
+		}
+		p, ok := eng.store.Get(id)
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write([]byte(p.HTML))
+	})
+
 	router.Get("/stream", func(w http.ResponseWriter, r *http.Request) {
 		flusher, ok := w.(http.Flusher)
 		if !ok {
@@ -365,24 +519,16 @@ func RegisterHTTPHandlers(router chi.Router, eng *Engine) {
 			return
 		}
 
-		page, ok := eng.store.Get(pageID)
-		if !ok {
-			http.Error(w, "page not found", http.StatusNotFound)
-			return
-		}
-		tableComp := page.Components[tableID]
-		if tableComp == nil || tableComp.Table == nil {
-			http.Error(w, "table not found", http.StatusNotFound)
-			return
-		}
-		if rowIndex < 0 || rowIndex >= len(tableComp.Table.Rows) {
-			http.Error(w, "row index out of range", http.StatusBadRequest)
-			return
-		}
-
-		inspectorComps, rootID := buildInspectorComponents(targetID, tableComp.Table.Headers, tableComp.Table.Rows[rowIndex])
-		htmlOut, err := eng.renderer.RenderSurface(inspectorComps, page.DataModel, rootID)
+		htmlOut, err := eng.InspectTableRow(pageID, tableID, rowIndex, targetID)
 		if err != nil {
+			if err.Error() == "page not found" || err.Error() == "table not found" {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			}
+			if err.Error() == "row index out of range" {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -418,6 +564,7 @@ func RegisterHTTPHandlers(router chi.Router, eng *Engine) {
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		if renderedHTML, ok, err := eng.renderUIFile("index.jsonl"); err == nil && ok {
+			renderedHTML = addDynamicPagesSection(renderedHTML, eng.ListPages())
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			_, _ = w.Write([]byte(renderedHTML))
 			return

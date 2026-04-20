@@ -101,6 +101,26 @@ body {
 	gap: var(--a2ui-spacing-m);
 }
 
+.a2ui-column.a2ui-inspector {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	column-gap: var(--a2ui-spacing-xl);
+	row-gap: var(--a2ui-spacing-s);
+	align-items: baseline;
+}
+
+.a2ui-column.a2ui-inspector > .a2ui-text:nth-child(odd) {
+	font-weight: 600;
+	color: color-mix(in oklab, var(--a2ui-color-on-surface) 70%, transparent);
+	white-space: nowrap;
+}
+
+.a2ui-column.a2ui-inspector > h3.a2ui-text {
+	grid-column: 1 / -1;
+	font-size: var(--a2ui-font-size-m);
+	margin-bottom: var(--a2ui-spacing-s);
+}
+
 .a2ui-list {
 	display: flex;
 	flex-direction: column;
