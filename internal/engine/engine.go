@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -152,6 +153,50 @@ func (e *Engine) ListPages() []store.Page {
 // ListTemplateFiles returns deterministic template file names.
 func (e *Engine) ListTemplateFiles() []string {
 	return e.registry.TemplateNames()
+}
+
+// ListCompositeNames returns sorted composite names from internal/ui/composites.
+func (e *Engine) ListCompositeNames() ([]string, error) {
+	compositesDir := filepath.Join(e.uiDir, "composites")
+	entries, err := os.ReadDir(compositesDir)
+	if err != nil {
+		return nil, err
+	}
+
+	names := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		fileName := entry.Name()
+		if !strings.HasSuffix(fileName, ".jsonl") || fileName == "index.jsonl" {
+			continue
+		}
+		names = append(names, strings.TrimSuffix(fileName, ".jsonl"))
+	}
+	sort.Strings(names)
+	return names, nil
+}
+
+// ReadCompositeJSONL returns the raw JSONL payload for a named composite reference.
+func (e *Engine) ReadCompositeJSONL(name string) (string, error) {
+	normalized := strings.ToLower(strings.TrimSpace(name))
+	if normalized == "" {
+		return "", fmt.Errorf("missing composite name")
+	}
+	if strings.Contains(normalized, "/") || strings.Contains(normalized, "\\") || strings.Contains(normalized, "..") {
+		return "", fmt.Errorf("invalid composite name")
+	}
+
+	compositePath := filepath.Join(e.uiDir, "composites", normalized+".jsonl")
+	b, err := os.ReadFile(compositePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", fmt.Errorf("composite %q not found", normalized)
+		}
+		return "", err
+	}
+	return string(b), nil
 }
 
 func (e *Engine) renderUIFile(fileName string) (string, bool, error) {

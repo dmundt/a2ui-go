@@ -59,6 +59,40 @@ func StartStdio(ctx context.Context, h *Handlers) error {
 		)
 	}
 
+	registerListCompositesTool := func(name string) {
+		s.AddTool(
+			mcpgo.NewTool(name, mcpgo.WithDescription("List composite reference names")),
+			func(ctx context.Context, req mcpgo.CallToolRequest) (*mcpgo.CallToolResult, error) {
+				out, err := h.ListComposites()
+				if err != nil {
+					return nil, err
+				}
+				return mcpgo.NewToolResultText(out), nil
+			},
+		)
+	}
+
+	registerFetchCompositeTool := func(name string) {
+		s.AddTool(
+			mcpgo.NewTool(
+				name,
+				mcpgo.WithDescription("Fetch one composite reference JSONL payload"),
+				mcpgo.WithString("name", mcpgo.Required(), mcpgo.Description("Composite name, e.g. header")),
+			),
+			func(ctx context.Context, req mcpgo.CallToolRequest) (*mcpgo.CallToolResult, error) {
+				name, err := req.RequireString("name")
+				if err != nil {
+					return nil, err
+				}
+				out, err := h.FetchComposite(name)
+				if err != nil {
+					return nil, err
+				}
+				return mcpgo.NewToolResultText(out), nil
+			},
+		)
+	}
+
 	registerHealthTool := func(name string) {
 		s.AddTool(
 			mcpgo.NewTool(name, mcpgo.WithDescription("Health check")),
@@ -75,12 +109,16 @@ func StartStdio(ctx context.Context, h *Handlers) error {
 	registerRenderTool("a2ui_render")
 	registerPagesTool("a2ui_list_pages")
 	registerTemplatesTool("a2ui_list_templates")
+	registerListCompositesTool("a2ui_list_composites")
+	registerFetchCompositeTool("a2ui_fetch_composite")
 	registerHealthTool("a2ui_health")
 
 	// Backward-compatible aliases for clients still targeting dotted names.
 	registerRenderTool("a2ui.render")
 	registerPagesTool("a2ui.list_pages")
 	registerTemplatesTool("a2ui.list_templates")
+	registerListCompositesTool("a2ui.list_composites")
+	registerFetchCompositeTool("a2ui.fetch_composite")
 	registerHealthTool("a2ui.health")
 
 	stdio := server.NewStdioServer(s)

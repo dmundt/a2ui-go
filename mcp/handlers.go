@@ -2,6 +2,7 @@ package mcp
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/dmundt/a2ui-go/internal/engine"
 	"github.com/dmundt/a2ui-go/renderer"
@@ -36,6 +37,42 @@ func (h *Handlers) ListPages() (string, error) {
 // ListTemplates returns known template files in JSON text.
 func (h *Handlers) ListTemplates() (string, error) {
 	b, err := json.Marshal(h.engine.ListTemplateFiles())
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+// ListComposites returns available composite reference names in JSON text.
+func (h *Handlers) ListComposites() (string, error) {
+	names, err := h.engine.ListCompositeNames()
+	if err != nil {
+		return "", err
+	}
+	b, err := json.Marshal(names)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+// FetchComposite returns one composite reference payload in JSON text.
+func (h *Handlers) FetchComposite(name string) (string, error) {
+	normalized := strings.ToLower(strings.TrimSpace(name))
+	jsonl, err := h.engine.ReadCompositeJSONL(normalized)
+	if err != nil {
+		return "", err
+	}
+	payload := struct {
+		Name  string `json:"name"`
+		Route string `json:"route"`
+		JSONL string `json:"jsonl"`
+	}{
+		Name:  normalized,
+		Route: "/composites/" + normalized,
+		JSONL: jsonl,
+	}
+	b, err := json.Marshal(payload)
 	if err != nil {
 		return "", err
 	}
